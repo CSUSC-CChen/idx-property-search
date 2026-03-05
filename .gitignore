@@ -1,3 +1,5 @@
 .DS_Store
 *.sql
 node_modules/
+.idea/
+*.iml
