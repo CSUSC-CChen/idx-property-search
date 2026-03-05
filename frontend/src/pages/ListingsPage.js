@@ -68,33 +68,33 @@ function ListingsPage() {
 
 function PropertyCard({ property }) {
   return (
-    <div className="property-card">
-      <div className="property-image">
-        {property.Media ? (
-          <img src={property.Media} alt={property.L_Address} />
-        ) : (
-          <div className="no-image">No image available</div>
-        )}
-      </div>
-      
-      <div className="property-info">
-        <div className="price">${property.L_SystemPrice?.toLocaleString()}</div>
-        <div className="address">{property.L_Address}</div>
-        <div className="city">{property.L_City}, {property.L_State}</div>
-        
-        <div className="property-details">
-          <span>{property.L_Keyword2} beds</span>
-          <span>•</span>
-          <span>{property.LM_Dec_3} baths</span>
-          {property.LM_Int2_3 && (
-            <>
-              <span>•</span>
-              <span>{property.LM_Int2_3.toLocaleString()} sqft</span>
-            </>
+      <div className="property-card">
+        <div className="property-image">
+          {property.L_Photos ? (
+              <img src={property.L_Photos} alt={property.L_Address} />
+          ) : (
+              <div className="no-image">No image available</div>
           )}
         </div>
+
+        <div className="property-info">
+          <div className="price">${property.L_SystemPrice?.toLocaleString()}</div>
+          <div className="address">{property.L_Address}</div>
+          <div className="city">{property.L_City}, {property.L_State} {property.L_Zip}</div>
+
+          <div className="property-details">
+            <span>{property.L_Keyword2} beds</span>
+            <span>•</span>
+            <span>{property.LM_Dec_3} baths</span>
+            {property.LM_Int2_3 && (
+                <>
+                  <span>•</span>
+                  <span>{property.LM_Int2_3.toLocaleString()} sqft</span>
+                </>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
   );
 }
 
