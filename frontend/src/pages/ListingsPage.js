@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchProperties } from '../api/client';
 import PropertyFilters from '../components/PropertyFilters';
 import './ListingsPage.css';
+import Pagination from '../components/Pagination';
 
 function ListingsPage() {
   const [properties, setProperties] = useState([]);
@@ -9,19 +10,20 @@ function ListingsPage() {
   const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
   const [filters, setFilters] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
 
   useEffect(() => {
     loadProperties();
-  }, [filters]);
+  }, [filters, currentPage]);
 
   async function loadProperties() {
     try {
       setLoading(true);
       setError(null);
-      
-      const params = { ...filters, limit: 20, offset: 0 };
+      const offset = (currentPage - 1) * itemsPerPage;
+      const params = { ...filters, limit: itemsPerPage, offset };
       const data = await fetchProperties(params);
-      
       setProperties(data.results);
       setTotal(data.total);
     } catch (err) {
@@ -33,37 +35,62 @@ function ListingsPage() {
 
   const handleSearch = (newFilters) => {
     setFilters(newFilters);
+    setCurrentPage(1);
   };
 
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo(0, 0);
+  };
+
+  const totalPages = Math.ceil(total / itemsPerPage);
+
+  // --- START OF UPDATED RETURN STATEMENT ---
   return (
-    <div className="listings-page">
-      <h1>Property Listings</h1>
-      
-      <PropertyFilters onSearch={handleSearch} />
-      
-      {loading && <div className="loading">Loading properties...</div>}
-      
-      {error && <div className="error">{error}</div>}
-      
-      {!loading && !error && (
-        <>
-          <p>Showing {properties.length} of {total} properties</p>
-          
-          {properties.length === 0 ? (
-            <div className="no-results">
-              No properties found matching your criteria. Try adjusting your filters.
-            </div>
-          ) : (
-            <div className="property-grid">
-              {properties.map(property => (
-                <PropertyCard key={property.ListingId} property={property} />
-              ))}
-            </div>
-          )}
-        </>
-      )}
-    </div>
+      <div className="listings-page">
+        <h1>Property Listings</h1>
+
+        <PropertyFilters onSearch={handleSearch} />
+
+        {/* 1. Results Summary */}
+        {!loading && !error && (
+            <p className="results-summary">
+              Showing {((currentPage - 1) * itemsPerPage) + 1}-
+              {Math.min(currentPage * itemsPerPage, total)} of {total.toLocaleString()} properties
+            </p>
+        )}
+
+        {loading && <div className="loading">Loading properties...</div>}
+        {error && <div className="error">{error}</div>}
+
+        {!loading && !error && (
+            <>
+              {properties.length === 0 ? (
+                  <div className="no-results">
+                    No properties found matching your criteria. Try adjusting your filters.
+                  </div>
+              ) : (
+                  <>
+                    {/* 2. Property Grid */}
+                    <div className="property-grid">
+                      {properties.map(property => (
+                          <PropertyCard key={property.ListingId} property={property} />
+                      ))}
+                    </div>
+
+                    {/* 3. Pagination Controls (Added here) */}
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+                  </>
+              )}
+            </>
+        )}
+      </div>
   );
+  // --- END OF UPDATED RETURN STATEMENT ---
 }
 
 function PropertyCard({ property }) {
