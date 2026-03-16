@@ -3,6 +3,7 @@ import { fetchProperties } from '../api/client';
 import PropertyFilters from '../components/PropertyFilters';
 import './ListingsPage.css';
 import Pagination from '../components/Pagination';
+import { useNavigate } from 'react-router-dom';
 
 function ListingsPage() {
   const [properties, setProperties] = useState([]);
@@ -74,7 +75,7 @@ function ListingsPage() {
                     {/* 2. Property Grid */}
                     <div className="property-grid">
                       {properties.map(property => (
-                          <PropertyCard key={property.ListingId} property={property} />
+                          <PropertyCard key={property.L_ListingID} property={property} />
                       ))}
                     </div>
 
@@ -94,11 +95,18 @@ function ListingsPage() {
 }
 
 function PropertyCard({ property }) {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/property/${property.L_ListingID}`);
+  };
+  const photos = safeParsePhotos(property.L_Photos);
+  const coverPhoto = photos[0] || null;
   return (
-      <div className="property-card">
+      <div className="property-card" onClick={handleClick}>
         <div className="property-image">
-          {property.L_Photos ? (
-              <img src={property.L_Photos} alt={property.L_Address} />
+          {coverPhoto ? (
+              <img src={coverPhoto} alt={property.L_Address} />
           ) : (
               <div className="no-image">No image available</div>
           )}
@@ -123,6 +131,18 @@ function PropertyCard({ property }) {
         </div>
       </div>
   );
+}
+function safeParsePhotos(rawPhotos) {
+  if (!rawPhotos || typeof rawPhotos !== 'string') {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(rawPhotos);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 export default ListingsPage;
