@@ -4,6 +4,7 @@ import PropertyFilters from '../components/PropertyFilters';
 import './ListingsPage.css';
 import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
+import { safeParsePhotos } from '../utils/PhotoUtils.js';
 
 function ListingsPage() {
   const [properties, setProperties] = useState([]);
@@ -53,7 +54,6 @@ function ListingsPage() {
 
         <PropertyFilters onSearch={handleSearch} />
 
-        {/* 1. Results Summary */}
         {!loading && !error && (
             <p className="results-summary">
               Showing {((currentPage - 1) * itemsPerPage) + 1}-
@@ -72,14 +72,12 @@ function ListingsPage() {
                   </div>
               ) : (
                   <>
-                    {/* 2. Property Grid */}
                     <div className="property-grid">
                       {properties.map(property => (
                           <PropertyCard key={property.L_ListingID} property={property} />
                       ))}
                     </div>
 
-                    {/* 3. Pagination Controls (Added here) */}
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
@@ -131,18 +129,6 @@ function PropertyCard({ property }) {
         </div>
       </div>
   );
-}
-function safeParsePhotos(rawPhotos) {
-  if (!rawPhotos || typeof rawPhotos !== 'string') {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(rawPhotos);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
 }
 
 export default ListingsPage;
