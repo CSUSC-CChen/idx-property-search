@@ -22,7 +22,7 @@ router.get('/:id/openhouses', async (req, res) => {
     }
 
     const [propertyCheck] = await pool.query(
-      'SELECT ListingId FROM rets_property WHERE ListingId = ?',
+      'SELECT L_ListingID FROM rets_property WHERE L_ListingID = ?',
       [id]
     );
 
@@ -34,7 +34,7 @@ router.get('/:id/openhouses', async (req, res) => {
     }
 
     const [openhouses] = await pool.query(
-      'SELECT * FROM rets_openhouse WHERE ListingId = ? ORDER BY OpenHouseDate, OpenHouseStartTime',
+      'SELECT * FROM rets_openhouse WHERE L_ListingID = ? ORDER BY OpenHouseDate, OH_StartTime',
       [id]
     );
 
@@ -60,7 +60,7 @@ router.get('/:id', async (req, res) => {
     }
 
     const [results] = await pool.query(
-      'SELECT * FROM rets_property WHERE ListingId = ?',
+      'SELECT * FROM rets_property WHERE L_ListingID = ?',
       [id]
     );
 

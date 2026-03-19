@@ -3,6 +3,8 @@ import { fetchProperties } from '../api/client';
 import PropertyFilters from '../components/PropertyFilters';
 import './ListingsPage.css';
 import Pagination from '../components/Pagination';
+import { useNavigate } from 'react-router-dom';
+import { safeParsePhotos } from '../utils/PhotoUtils.js';
 
 function ListingsPage() {
   const [properties, setProperties] = useState([]);
@@ -52,7 +54,6 @@ function ListingsPage() {
 
         <PropertyFilters onSearch={handleSearch} />
 
-        {/* 1. Results Summary */}
         {!loading && !error && (
             <p className="results-summary">
               Showing {((currentPage - 1) * itemsPerPage) + 1}-
@@ -71,14 +72,12 @@ function ListingsPage() {
                   </div>
               ) : (
                   <>
-                    {/* 2. Property Grid */}
                     <div className="property-grid">
                       {properties.map(property => (
-                          <PropertyCard key={property.ListingId} property={property} />
+                          <PropertyCard key={property.L_ListingID} property={property} />
                       ))}
                     </div>
 
-                    {/* 3. Pagination Controls (Added here) */}
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
@@ -94,11 +93,18 @@ function ListingsPage() {
 }
 
 function PropertyCard({ property }) {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/property/${property.L_ListingID}`);
+  };
+  const photos = safeParsePhotos(property.L_Photos);
+  const coverPhoto = photos[0] || null;
   return (
-      <div className="property-card">
+      <div className="property-card" onClick={handleClick}>
         <div className="property-image">
-          {property.L_Photos ? (
-              <img src={property.L_Photos} alt={property.L_Address} />
+          {coverPhoto ? (
+              <img src={coverPhoto} alt={property.L_Address} />
           ) : (
               <div className="no-image">No image available</div>
           )}
