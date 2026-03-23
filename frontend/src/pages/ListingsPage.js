@@ -15,16 +15,29 @@ function ListingsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
 
+  // New Sorting State
+  const [sortBy, setSortBy] = useState('');
+  const [sortOrder, setSortOrder] = useState('DESC'); // Default to Newest/Highest first
+
+  // Add sortBy and sortOrder to the dependency array
   useEffect(() => {
     loadProperties();
-  }, [filters, currentPage]);
+  }, [filters, currentPage, sortBy, sortOrder]);
 
   async function loadProperties() {
     try {
       setLoading(true);
       setError(null);
       const offset = (currentPage - 1) * itemsPerPage;
-      const params = { ...filters, limit: itemsPerPage, offset };
+
+      const params = {
+        ...filters,
+        limit: itemsPerPage,
+        offset,
+        // Only send sorting params if a field is selected
+        ...(sortBy && { sortBy, sortOrder })
+      };
+
       const data = await fetchProperties(params);
       setProperties(data.results);
       setTotal(data.total);
@@ -45,21 +58,58 @@ function ListingsPage() {
     window.scrollTo(0, 0);
   };
 
+  // New Handlers for Sorting
+  const handleSortFieldChange = (e) => {
+    setSortBy(e.target.value);
+    setCurrentPage(1); // Reset to page 1 on sort change
+  };
+
+  const handleSortOrderChange = (e) => {
+    setSortOrder(e.target.value);
+    setCurrentPage(1); // Reset to page 1 on sort change
+  };
+
   const totalPages = Math.ceil(total / itemsPerPage);
 
-  // --- START OF UPDATED RETURN STATEMENT ---
   return (
       <div className="listings-page">
         <h1>Property Listings</h1>
 
         <PropertyFilters onSearch={handleSearch} />
 
-        {!loading && !error && (
-            <p className="results-summary">
-              Showing {((currentPage - 1) * itemsPerPage) + 1}-
-              {Math.min(currentPage * itemsPerPage, total)} of {total.toLocaleString()} properties
-            </p>
-        )}
+        {/* --- START OF SORT CONTROLS --- */}
+        <div className="sort-container">
+          <div className="sort-controls">
+            <label htmlFor="sortBy">Sort by:</label>
+            <select id="sortBy" value={sortBy} onChange={handleSortFieldChange}>
+              <option value="">Default (Newest)</option>
+              <option value="price">Price</option>
+              <option value="date">Date Listed</option>
+              <option value="size">Square Footage</option>
+              <option value="beds">Bedrooms</option>
+            </select>
+
+            {sortBy && (
+                <select value={sortOrder} onChange={handleSortOrderChange}>
+                  {/* Conditional labeling based on what we are sorting */}
+                  <option value="ASC">
+                    {sortBy === 'price' ? 'Price: Low to High' : 'Ascending'}
+                  </option>
+                  <option value="DESC">
+                    {sortBy === 'price' ? 'Price: High to Low' : 'Descending'}
+                  </option>
+                </select>
+            )}
+          </div>
+
+          {!loading && !error && (
+              <p className="results-summary">
+                Showing {((currentPage - 1) * itemsPerPage) + 1}-
+                {Math.min(currentPage * itemsPerPage, total)} of {total.toLocaleString()} properties
+              </p>
+          )}
+        </div>
+        {/* --- END OF SORT CONTROLS --- */}
 
         {loading && <div className="loading">Loading properties...</div>}
         {error && <div className="error">{error}</div>}
@@ -89,17 +139,19 @@ function ListingsPage() {
         )}
       </div>
   );
-  // --- END OF UPDATED RETURN STATEMENT ---
 }
 
+// PropertyCard stays the same as your version
 function PropertyCard({ property }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
     navigate(`/property/${property.L_ListingID}`);
   };
+
   const photos = safeParsePhotos(property.L_Photos);
   const coverPhoto = photos[0] || null;
+
   return (
       <div className="property-card" onClick={handleClick}>
         <div className="property-image">
