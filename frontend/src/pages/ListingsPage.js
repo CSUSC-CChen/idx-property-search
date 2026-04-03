@@ -3,8 +3,6 @@ import { fetchProperties } from '../api/client';
 import PropertyFilters from '../components/PropertyFilters';
 import './ListingsPage.css';
 import Pagination from '../components/Pagination';
-import { useNavigate } from 'react-router-dom';
-import { safeParsePhotos } from '../utils/PhotoUtils.js';
 import PropertyCard from '../components/PropertyCard';
 
 function ListingsPage() {
@@ -15,39 +13,35 @@ function ListingsPage() {
   const [filters, setFilters] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
-
-  // New Sorting State
   const [sortBy, setSortBy] = useState('');
-  const [sortOrder, setSortOrder] = useState('DESC'); // Default to Newest/Highest first
+  const [sortOrder, setSortOrder] = useState('DESC');
 
-  // Add sortBy and sortOrder to the dependency array
   useEffect(() => {
-    loadProperties();
-  }, [filters, currentPage, sortBy, sortOrder]);
+    async function loadProperties() {
+      try {
+        setLoading(true);
+        setError(null);
+        const offset = (currentPage - 1) * itemsPerPage;
 
-  async function loadProperties() {
-    try {
-      setLoading(true);
-      setError(null);
-      const offset = (currentPage - 1) * itemsPerPage;
+        const params = {
+          ...filters,
+          limit: itemsPerPage,
+          offset,
+          ...(sortBy && { sortBy, sortOrder })
+        };
 
-      const params = {
-        ...filters,
-        limit: itemsPerPage,
-        offset,
-        // Only send sorting params if a field is selected
-        ...(sortBy && { sortBy, sortOrder })
-      };
-
-      const data = await fetchProperties(params);
-      setProperties(data.results);
-      setTotal(data.total);
-    } catch (err) {
-      setError('Failed to load properties. Please try again.');
-    } finally {
-      setLoading(false);
+        const data = await fetchProperties(params);
+        setProperties(data.results);
+        setTotal(data.total);
+      } catch (err) {
+        setError('Failed to load properties. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     }
-  }
+
+    loadProperties();
+  }, [filters, currentPage, sortBy, sortOrder, itemsPerPage]);
 
   const handleSearch = (newFilters) => {
     setFilters(newFilters);
@@ -59,15 +53,14 @@ function ListingsPage() {
     window.scrollTo(0, 0);
   };
 
-  // New Handlers for Sorting
   const handleSortFieldChange = (e) => {
     setSortBy(e.target.value);
-    setCurrentPage(1); // Reset to page 1 on sort change
+    setCurrentPage(1);
   };
 
   const handleSortOrderChange = (e) => {
     setSortOrder(e.target.value);
-    setCurrentPage(1); // Reset to page 1 on sort change
+    setCurrentPage(1);
   };
 
   const totalPages = Math.ceil(total / itemsPerPage);
@@ -75,10 +68,7 @@ function ListingsPage() {
   return (
       <div className="listings-page">
         <h1>Property Listings</h1>
-
         <PropertyFilters onSearch={handleSearch} />
-
-        {/* --- START OF SORT CONTROLS --- */}
         <div className="sort-container">
           <div className="sort-controls">
             <label htmlFor="sortBy">Sort by:</label>
@@ -89,10 +79,8 @@ function ListingsPage() {
               <option value="size">Square Footage</option>
               <option value="beds">Bedrooms</option>
             </select>
-
             {sortBy && (
                 <select value={sortOrder} onChange={handleSortOrderChange}>
-                  {/* Conditional labeling based on what we are sorting */}
                   <option value="ASC">
                     {sortBy === 'price' ? 'Price: Low to High' : 'Ascending'}
                   </option>
@@ -102,7 +90,6 @@ function ListingsPage() {
                 </select>
             )}
           </div>
-
           {!loading && !error && (
               <p className="results-summary">
                 Showing {((currentPage - 1) * itemsPerPage) + 1}-
@@ -110,17 +97,12 @@ function ListingsPage() {
               </p>
           )}
         </div>
-        {/* --- END OF SORT CONTROLS --- */}
-
         {loading && <div className="loading">Loading properties...</div>}
         {error && <div className="error">{error}</div>}
-
         {!loading && !error && (
             <>
               {properties.length === 0 ? (
-                  <div className="no-results">
-                    No properties found matching your criteria. Try adjusting your filters.
-                  </div>
+                  <div className="no-results">No properties found.</div>
               ) : (
                   <>
                     <div className="property-grid">
@@ -128,7 +110,6 @@ function ListingsPage() {
                           <PropertyCard key={property.L_ListingID} property={property} />
                       ))}
                     </div>
-
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
