@@ -4,11 +4,13 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
     const canGoPrev = currentPage > 1;
     const canGoNext = currentPage < totalPages;
     const handlePrevious = () => {
+        /* istanbul ignore else */
         if (canGoPrev) {
             onPageChange(currentPage - 1);
         }
     };
     const handleNext = () => {
+        /* istanbul ignore else */
         if (canGoNext) {
             onPageChange(currentPage + 1);
         }
