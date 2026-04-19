@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom'; // Removed useNavigate
 import { fetchPropertyDetail, fetchOpenHouses } from '../api/client';
 import './PropertyDetailPage.css';
+import { safeParsePhotos } from '../utils/PhotoUtils';
 
 function PropertyDetailPage() {
     const { id } = useParams();
@@ -46,7 +47,7 @@ function PropertyDetailPage() {
     if (!property) return null;
 
     // Manual photo parsing since safeParsePhotos was flagged as unused/external
-    const photos = property.L_Photos ? (Array.isArray(property.L_Photos) ? property.L_Photos : [property.L_Photos]) : [];
+    const photos = safeParsePhotos(property.L_Photos);
     const coverPhoto = photos[0] || null;
 
     return (
