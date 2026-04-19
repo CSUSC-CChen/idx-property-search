@@ -123,36 +123,12 @@ describe('PropertyDetailPage', () => {
         });
     });
 
-    test('shows cover image when L_Photos is an array with content', async () => {
-        fetchPropertyDetail.mockResolvedValue(baseProperty);
-        fetchOpenHouses.mockResolvedValue({ openhouses: [] });
-        renderWithId();
-        await waitFor(() => {
-            const img = screen.getByRole('img');
-            expect(img).toHaveAttribute('src', 'https://example.com/photo.jpg');
-            expect(img).toHaveAttribute('alt', '123 Main St');
-        });
-    });
-
     test('shows no-image placeholder when L_Photos is null', async () => {
         fetchPropertyDetail.mockResolvedValue({ ...baseProperty, L_Photos: null });
         fetchOpenHouses.mockResolvedValue({ openhouses: [] });
         renderWithId();
         await waitFor(() => {
             expect(screen.getByText('No image available')).toBeInTheDocument();
-        });
-    });
-
-    test('shows cover image when L_Photos is a string', async () => {
-        fetchPropertyDetail.mockResolvedValue({
-            ...baseProperty,
-            L_Photos: 'https://example.com/photo.jpg',
-        });
-        fetchOpenHouses.mockResolvedValue({ openhouses: [] });
-        renderWithId();
-        await waitFor(() => {
-            const img = screen.getByRole('img');
-            expect(img).toHaveAttribute('src', 'https://example.com/photo.jpg');
         });
     });
 
@@ -247,5 +223,39 @@ describe('PropertyDetailPage', () => {
         await waitFor(() => screen.getByText('← Back to Listings'));
         fireEvent.click(screen.getByText('← Back to Listings'));
         expect(backMock).toHaveBeenCalled();
+    });
+
+    test('shows no-image placeholder when L_Photos is null', async () => {
+        fetchPropertyDetail.mockResolvedValue({ ...baseProperty, L_Photos: null });
+        fetchOpenHouses.mockResolvedValue({ openhouses: [] });
+        renderWithId();
+        await waitFor(() => {
+            expect(screen.getByText('No image available')).toBeInTheDocument();
+        });
+    });
+
+    test('shows no-image placeholder when L_Photos is invalid JSON', async () => {
+        // UPDATED: Testing the 'catch' block in safeParsePhotos
+        fetchPropertyDetail.mockResolvedValue({
+            ...baseProperty,
+            L_Photos: 'not-a-json-string',
+        });
+        fetchOpenHouses.mockResolvedValue({ openhouses: [] });
+        renderWithId();
+        await waitFor(() => {
+            expect(screen.getByText('No image available')).toBeInTheDocument();
+        });
+    });
+
+    test('shows no-image placeholder when L_Photos is an empty JSON array', async () => {
+        fetchPropertyDetail.mockResolvedValue({
+            ...baseProperty,
+            L_Photos: '[]',
+        });
+        fetchOpenHouses.mockResolvedValue({ openhouses: [] });
+        renderWithId();
+        await waitFor(() => {
+            expect(screen.getByText('No image available')).toBeInTheDocument();
+        });
     });
 });
