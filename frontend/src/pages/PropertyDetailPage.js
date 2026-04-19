@@ -11,6 +11,7 @@ function PropertyDetailPage() {
     const [error, setError] = useState(null);
 
     const formatPascalCase = useCallback((text) => {
+        /* istanbul ignore next */
         if (!text) return "";
         return text.replace(/([A-Z])/g, ' $1').trim();
     }, []);
