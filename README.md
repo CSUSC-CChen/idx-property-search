@@ -9,13 +9,14 @@ A full-stack property search application built with React, Node.js/Express, and 
 - Property detail pages
 - Open house schedules
 - Sort properties by price, date listed, or size
-- Let users save favorite properties using localStorage
+- Save favorite properties using localStorage
 
 ## Prerequisites
 
 - Node.js 18+ and npm
 - Docker Desktop
 - Git
+- Make (optional — provides convenience commands)
 
 ## Setup Instructions
 
@@ -27,7 +28,7 @@ cd idx-internship
 
 ### 2. Start Database
 ```bash
-docker run --name idx-mysql-local -p 3306:3306 \
+docker run --name idx-mysql-local -p 3307:3306 \
   -e MYSQL_ROOT_PASSWORD=rootpass \
   -e MYSQL_DATABASE=rets \
   -d mysql:8.0
@@ -36,6 +37,9 @@ docker run --name idx-mysql-local -p 3306:3306 \
 docker exec -i idx-mysql-local mysql -uroot -prootpass rets < rets_property.sql
 docker exec -i idx-mysql-local mysql -uroot -prootpass rets < rets_openhouse.sql
 ```
+
+> **Note:** The container maps host port `3307` to MySQL's internal `3306`.  
+> Set `DB_PORT=3307` in `backend/.env` to match.
 
 ### 3. Backend Setup
 ```bash
@@ -56,77 +60,150 @@ npm start
 
 Frontend runs on http://localhost:3000
 
+---
+
+## Makefile Shortcuts
+
+A `Makefile` at the repo root provides convenience targets so you don't have to `cd` into each folder manually.
+
+| Command | What it does |
+|---------|-------------|
+| `make install` | `npm install` in both `backend/` and `frontend/` |
+| `make start` | Starts the backend and frontend concurrently |
+| `make stop` | Kills all running Node processes |
+| `make clean` | Removes `node_modules` from both projects |
+
+```bash
+# First-time setup
+make install
+
+# Start the full stack
+make start
+
+# Stop everything
+make stop
+```
+
+---
+
 ## Running Tests
 
-Backend tests:
+### Backend
 ```bash
 cd backend
-npm test
+npm test               # run once
+npm run test:watch     # watch mode
+npm run test:coverage  # with coverage report
 ```
 
-Frontend tests:
+### Frontend
 ```bash
 cd frontend
-npm test                          # watch mode
-npm test -- --watchAll=false      # run once and exit
-npm test -- --coverage --watchAll=false   # with coverage report
+npm test                                        # watch mode
+npm test -- --watchAll=false                    # run once and exit
+npm test -- --coverage --watchAll=false         # with coverage report
 ```
+
+---
 
 ## Project Structure
 
 ```
 idx-internship/
+├── Makefile
+├── README.md
+├── .github/
+│   └── pull_request_template.md
 ├── backend/
-│   ├── src/
-│   │   ├── db/
-│   │   │   └── mysql.js
-│   │   ├── routes/
-│   │   │   └── properties.js
-│   │   └── index.js
-│   ├── .env
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── api/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   └── hooks/
-│   └── package.json
-└── README.md
+│   ├── package.json
+│   └── src/
+│       ├── index.js
+│       ├── db/
+│       │   └── mysql.js
+│       └── routes/
+│           ├── properties.js
+│           └── properties.test.js
+└── frontend/
+    ├── package.json
+    └── src/
+        ├── App.js
+        ├── App.test.js
+        ├── index.js
+        ├── reportWebVitals.js
+        ├── reportWebVitals.test.js
+        ├── setupTests.js
+        ├── api/
+        │   ├── client.js
+        │   └── client.test.js
+        ├── components/
+        │   ├── ErrorBoundary.js
+        │   ├── ErrorBoundary.test.js
+        │   ├── Pagination.js
+        │   ├── Pagination.test.js
+        │   ├── PropertyCard.js
+        │   ├── PropertyCard.test.js
+        │   ├── PropertyFilters.js
+        │   └── PropertyFilters.test.js
+        ├── hooks/
+        │   ├── useFavorites.js
+        │   └── useFavorites.test.js
+        ├── pages/
+        │   ├── ListingsPage.js
+        │   ├── ListingsPage.test.js
+        │   ├── PropertyDetailPage.js
+        │   └── PropertyDetailPage.test.js
+        └── utils/
+            ├── PhotoUtils.js
+            ├── PhotoUtils.test.js
+            ├── api-helpers.js
+            ├── api-helpers.test.js
+            ├── propertyMapper.js
+            └── propertyMapper.test.js
 ```
+
+---
 
 ## API Endpoints
 
-### GET /api/properties
-Returns paginated list of properties with optional filters.
+### `GET /api/properties`
+Returns a paginated list of properties with optional filters.
 
-Query parameters:
-- `limit`: Number of results (default: 20)
-- `offset`: Pagination offset (default: 0)
-- `city`: Filter by city
-- `zipcode`: Filter by ZIP code
-- `minPrice`: Minimum price
-- `maxPrice`: Maximum price
-- `beds`: Minimum bedrooms
-- `baths`: Minimum bathrooms
+**Query parameters:**
 
-Example:
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | number | 20 | Results per page |
+| `offset` | number | 0 | Pagination offset |
+| `city` | string | — | Filter by city |
+| `zipcode` | string | — | Filter by ZIP code |
+| `minPrice` | number | — | Minimum list price |
+| `maxPrice` | number | — | Maximum list price |
+| `beds` | number | — | Minimum bedrooms |
+| `baths` | number | — | Minimum bathrooms |
+| `sortBy` | string | — | `price`, `date`, `size`, or `beds` |
+| `sortOrder` | string | `DESC` | `ASC` or `DESC` |
+
 ```bash
 GET /api/properties?city=Los%20Angeles&minPrice=500000&beds=3
 ```
 
-### GET /api/properties/:id
+### `GET /api/properties/:id`
 Returns details for a single property.
 
-### GET /api/properties/:id/openhouses
-Returns open house schedule for a property.
+### `GET /api/properties/:id/openhouses`
+Returns the open house schedule for a property.
+
+### `GET /api/health`
+Returns `{ status: "ok", database: "connected" }` when the DB is reachable.
+
+---
 
 ## Architecture Decisions
 
 ### Why Docker for MySQL?
 - Consistent environment across developers
-- Easy to start/stop without affecting local machine
-- Simple to reset and reimport data
+- Easy to start/stop without affecting the local machine
+- Simple to reset and re-import data
 
 ### Why Pagination?
 - Large dataset (1000+ properties) would be slow to load all at once
@@ -136,7 +213,9 @@ Returns open house schedule for a property.
 ### Why React Router?
 - Clean URLs for property detail pages
 - Browser back button works as expected
-- Easy to add more pages in future
+- Easy to add more pages in the future
+
+---
 
 ## Known Issues / Future Improvements
 
@@ -145,23 +224,25 @@ Returns open house schedule for a property.
 - Add saved searches
 - Mobile responsive design improvements
 
+---
+
 ## Troubleshooting
 
 **Backend won't start:**
 - Check MySQL is running: `docker ps`
-- Verify .env file exists with correct credentials
+- Verify `.env` exists in `backend/` with the correct credentials
+- Confirm `DB_PORT=3307` matches the Docker port mapping
 
 **Frontend shows CORS errors:**
-- Ensure proxy is set in frontend/package.json
-- Restart React dev server
+- Ensure the proxy is set in `frontend/package.json`
+- Restart the React dev server
 
 **Tests failing:**
 - Clear node_modules: `rm -rf node_modules && npm install`
 - Check Node version: `node --version` (should be 18+)
 
 **Tests failing with "Cannot find module 'react-router-dom'":**
-- Check there's no stray `node_modules` or `package.json` at the repo
-  root — only `frontend/` and `backend/` should have their own.
+- Check there's no stray `node_modules` or `package.json` at the repo root — only `frontend/` and `backend/` should have their own.
   If there is, delete it: `rm -rf node_modules package.json package-lock.json`
 - Then clean reinstall in the affected folder:
   `rm -rf node_modules package-lock.json && npm install --legacy-peer-deps`
@@ -175,9 +256,12 @@ Returns open house schedule for a property.
   `frontend/node_modules/react-scripts` (not `node_modules/jest`).
 - Or just run `npm test` from the terminal.
 
+---
+
 ## Contributors
 
-Xindi Chen - Initial development
+- Xindi Chen — Initial development
+- AI tool used: Claude
 
 ## License
 
