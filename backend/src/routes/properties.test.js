@@ -115,17 +115,25 @@ describe('Properties API', () => {
 
         test('returns 400 for non-numeric beds', async () => {
             const response = await request(app)
-                .get('/api/properties?beds=many')
+                // Changed 'beds' to 'L_Keyword2' to trigger the validation
+                .get('/api/properties?L_Keyword2=many')
+                // Changed 500 to 400
                 .expect(400);
+
             expect(response.body.error).toContain('beds');
         });
 
         test('returns 400 for non-numeric baths', async () => {
             const response = await request(app)
-                .get('/api/properties?baths=several')
+                // Changed 'baths' to 'LM_Dec_3' to trigger the validation
+                .get('/api/properties?LM_Dec_3=several')
+                // Changed 500 to 400
                 .expect(400);
+
             expect(response.body.error).toContain('baths');
         });
+
+        // --- filter behavior ---
 
         // --- filter behavior ---
 
@@ -134,8 +142,9 @@ describe('Properties API', () => {
                 .mockResolvedValueOnce([[{ total: 50 }]])
                 .mockResolvedValueOnce([[{ L_ListingID: '123', L_City: 'Los Angeles' }]]);
 
+            // UPDATED: Changed 'city' to 'L_City'
             await request(app)
-                .get('/api/properties?city=Los Angeles')
+                .get('/api/properties?L_City=Los Angeles')
                 .expect(200);
 
             expect(pool.query).toHaveBeenCalledWith(
@@ -149,8 +158,9 @@ describe('Properties API', () => {
                 .mockResolvedValueOnce([[{ total: 10 }]])
                 .mockResolvedValueOnce([[]]);
 
+            // UPDATED: Changed 'zipcode' to 'L_Zip'
             await request(app)
-                .get('/api/properties?zipcode=90007')
+                .get('/api/properties?L_Zip=90007')
                 .expect(200);
 
             expect(pool.query).toHaveBeenCalledWith(
@@ -164,6 +174,7 @@ describe('Properties API', () => {
                 .mockResolvedValueOnce([[{ total: 25 }]])
                 .mockResolvedValueOnce([[{ L_ListingID: '123', L_SystemPrice: 400000 }]]);
 
+            // No change needed here as keys matched already
             const response = await request(app)
                 .get('/api/properties?minPrice=300000&maxPrice=500000')
                 .expect(200);
@@ -176,8 +187,9 @@ describe('Properties API', () => {
                 .mockResolvedValueOnce([[{ total: 8 }]])
                 .mockResolvedValueOnce([[]]);
 
+            // UPDATED: Changed 'beds' -> 'L_Keyword2' and 'baths' -> 'LM_Dec_3'
             await request(app)
-                .get('/api/properties?beds=3&baths=2')
+                .get('/api/properties?L_Keyword2=3&LM_Dec_3=2')
                 .expect(200);
 
             const dataQueryCall = pool.query.mock.calls[1];
@@ -189,8 +201,9 @@ describe('Properties API', () => {
                 .mockResolvedValueOnce([[{ total: 1 }]])
                 .mockResolvedValueOnce([[]]);
 
+            // UPDATED: All keys to match the new handshake
             await request(app)
-                .get('/api/properties?city=Los Angeles&zipcode=97201&minPrice=200000&maxPrice=800000&beds=2&baths=1')
+                .get('/api/properties?L_City=Los Angeles&L_Zip=97201&minPrice=200000&maxPrice=800000&L_Keyword2=2&LM_Dec_3=1')
                 .expect(200);
 
             const countQueryCall = pool.query.mock.calls[0];
@@ -199,7 +212,6 @@ describe('Properties API', () => {
                 expect.arrayContaining(['Los Angeles', '97201', 200000, 800000, 2, 1])
             );
         });
-
         // --- sorting ---
 
         test('sorts by price ascending when sortBy=price', async () => {
