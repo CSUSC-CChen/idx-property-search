@@ -258,4 +258,19 @@ describe('PropertyDetailPage', () => {
             expect(screen.getByText('No image available')).toBeInTheDocument();
         });
     });
+    test('handles L_Photos as a JSON string correctly', async () => {
+        const photoUrl = 'https://example.com/json-photo.jpg';
+        fetchPropertyDetail.mockResolvedValue({
+            ...baseProperty,
+            L_Photos: JSON.stringify([photoUrl])
+        });
+        fetchOpenHouses.mockResolvedValue({ openhouses: [] });
+
+        renderWithId();
+
+        await waitFor(() => {
+            const img = screen.getByRole('img');
+            expect(img).toHaveAttribute('src', photoUrl);
+        });
+    });
 });
