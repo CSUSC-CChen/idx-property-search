@@ -88,7 +88,16 @@ router.get('/:id', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const { city, zipcode, minPrice, maxPrice, beds, baths, sortBy, sortOrder } = req.query;
+    const {
+      L_City: city,
+      L_Zip: zipcode,
+      minPrice,
+      maxPrice,
+      L_Keyword2: beds,
+      LM_Dec_3: baths,
+      sortBy,
+      sortOrder
+    } = req.query;
 
     // --- LIMIT / OFFSET VALIDATION ---
     // Validate raw input BEFORE defaulting, so "?limit=abc" is rejected
